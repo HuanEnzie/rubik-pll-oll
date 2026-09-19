@@ -1,0 +1,6 @@
+{
+  "name": "CubeQuick",
+  "description": "Tra cứu và luyện tập công thức OLL (57 cases) & PLL (21 cases) siêu tốc cho speedcuber.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
