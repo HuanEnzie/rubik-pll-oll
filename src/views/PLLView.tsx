@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Star, HelpCircle, ChevronRight, AlertTriangle } from 'lucide-react';
 import { AlgorithmCase, PLLCategory } from '../types';
 import { AlgorithmCard } from '../components/AlgorithmCard';
+import { ViewModeToggle } from '../components/ViewModeToggle';
 import { PLLDiagnosisModal } from '../components/PLLDiagnosisModal';
 
 interface PLLViewProps {
@@ -74,8 +75,10 @@ export const PLLView: React.FC<PLLViewProps> = ({
           </p>
         </div>
 
-        {/* Quick Search */}
-        <div className="relative w-full sm:w-64">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <ViewModeToggle />
+          {/* Quick Search */}
+          <div className="relative w-full sm:w-64">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
@@ -84,6 +87,7 @@ export const PLLView: React.FC<PLLViewProps> = ({
             placeholder="Lọc T-perm, Jb, Parity..."
             className="w-full pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-blue-400/60"
           />
+          </div>
         </div>
       </div>
 

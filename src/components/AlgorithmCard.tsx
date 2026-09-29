@@ -1,7 +1,7 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 import { AlgorithmCase } from '../types';
-import { CubeSvg } from './CubeSvg';
+import { CaseVisual } from './CaseVisual';
 
 interface AlgorithmCardProps {
   caseData: AlgorithmCase;
@@ -66,8 +66,8 @@ export const AlgorithmCard: React.FC<AlgorithmCardProps> = ({
       </div>
 
       {/* Pattern Visualizer (2D top view) */}
-      <div className="my-1.5 flex items-center justify-center p-2 rounded-lg bg-slate-950/60 border border-slate-850 w-full max-w-[120px] aspect-square">
-        <CubeSvg caseData={caseData} size={78} />
+      <div className="my-1.5 flex items-center justify-center p-1.5 rounded-lg bg-slate-950/60 border border-slate-850 w-full max-w-[150px] aspect-square">
+        <CaseVisual caseData={caseData} size={124} />
       </div>
 
       {/* Case AKA / Category */}

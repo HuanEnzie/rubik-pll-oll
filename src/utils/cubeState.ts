@@ -91,22 +91,12 @@ export function applyMove(cube: CubeState, move: string): CubeState {
   const clean = move.trim().replace(/[()[\]{}]/g, '');
   if (!clean) return cube;
 
-  // Handle Rw, Lw, Fw, Uw, Dw, Bw by normalizing to r, l, f, u, d, b
-  let normalized = clean;
-  if (/^[RLFUDB]w/i.test(normalized)) {
-    normalized = normalized[0].toLowerCase() + normalized.slice(2);
-  }
+  const d = decomposeMove(clean);
+  if (!d) return cube; // token lạ (ví dụ "+") -> bỏ qua
 
-  const base = normalized[0];
-  const modifier = normalized.slice(1);
-  const isDouble = modifier.includes('2');
-  const isPrime = modifier.includes("'") || modifier.includes('’');
-
-  const turns = isDouble ? 2 : isPrime ? 3 : 1;
   let next = cloneCube(cube);
-
-  for (let t = 0; t < turns; t++) {
-    next = applySingleMove(next, base);
+  for (let t = 0; t < d.turns; t++) {
+    next = applySingleMove(next, d.base);
   }
   return next;
 }
@@ -275,15 +265,63 @@ export function parseAlgorithmMoves(algorithm: string): string[] {
     .filter(Boolean);
 }
 
+const MOVE_RE = /^([RLUDFBrludfbMESxyz]|[RLUDFB]w)(2'?|'2?|3)?$/;
+
+/** Token có phải một nước đi hợp lệ mà engine mô phỏng được không. */
+export function isValidMove(token: string): boolean {
+  return MOVE_RE.test(token.replace(/’/g, "'"));
+}
+
+/**
+ * Chuẩn hoá một token: R2' -> R2, R3 -> R', Rw -> r, dấu ’ -> '.
+ * Trả về { base, turns } với turns ∈ {1, 2, 3} (3 = ngược chiều).
+ */
+export function decomposeMove(token: string): { base: string; turns: 1 | 2 | 3 } | null {
+  const t = token.replace(/’/g, "'");
+  const m = MOVE_RE.exec(t);
+  if (!m) return null;
+  let base = m[1];
+  if (base.length === 2) base = base[0].toLowerCase(); // Rw -> r
+  const mod = m[2] ?? '';
+  const turns = mod.includes('2') ? 2 : mod.includes("'") || mod === '3' ? 3 : 1;
+  return { base, turns };
+}
+
+export function formatMove(base: string, turns: 1 | 2 | 3): string {
+  return turns === 1 ? base : turns === 2 ? `${base}2` : `${base}'`;
+}
+
+/** Chuẩn hoá cả công thức (bỏ ngoặc, R2' -> R2, ...). Token lạ giữ nguyên. */
+export function normalizeAlgorithm(algorithm: string): string {
+  return parseAlgorithmMoves(algorithm)
+    .map(tok => {
+      const d = decomposeMove(tok);
+      return d ? formatMove(d.base, d.turns) : tok;
+    })
+    .join(' ');
+}
+
+export function invertMove(token: string): string {
+  const d = decomposeMove(token);
+  if (!d) return token;
+  return formatMove(d.base, d.turns === 1 ? 3 : d.turns === 3 ? 1 : 2);
+}
+
 /**
  * Inverts an algorithm to get setup move (e.g. to setup a case from solved state)
  */
 export function invertAlgorithm(algorithm: string): string {
-  const moves = parseAlgorithmMoves(algorithm);
-  const inverted = moves.reverse().map(m => {
-    if (m.endsWith("2")) return m;
-    if (m.endsWith("'") || m.endsWith("’")) return m.slice(0, -1);
-    return `${m}'`;
-  });
-  return inverted.join(' ');
+  return parseAlgorithmMoves(algorithm).reverse().map(invertMove).join(' ');
+}
+
+export function applyAlgorithm(cube: CubeState, algorithm: string): CubeState {
+  let c = cube;
+  for (const m of parseAlgorithmMoves(algorithm)) c = applyMove(c, m);
+  return c;
+}
+
+/** Sau khi chạy công thức, 6 tâm có về đúng chỗ không (loại các công thức kết thúc bằng x/y/z lệch). */
+export function netRotationIsIdentity(algorithm: string): boolean {
+  const s = applyAlgorithm(createSolvedCube(), algorithm);
+  return (['U', 'D', 'F', 'B', 'L', 'R'] as const).every((f, i) => s[f][1][1] === [0, 1, 2, 3, 4, 5][i]);
 }

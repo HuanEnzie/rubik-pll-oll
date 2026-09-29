@@ -49,6 +49,7 @@ export interface AlgorithmCase {
   number: number; // 1-57 for OLL, 1-21 for PLL
   name: string; // e.g. "OLL 21" or "T Perm"
   aka?: string[]; // e.g. ["H", "Double Sune"]
+  simulatable?: boolean; // false: không mô phỏng được trên 3x3 (Parity 4x4)
   category: string; // "Cross", "Dot", "Line", "L", "Corners", "Edges", "G Perms", "Other"
   groupNameVi: string; // Vietnamese category name e.g. "Chữ thập (Cross)", "Dấu chấm (Dot)"
   ollPattern?: OLLPattern;

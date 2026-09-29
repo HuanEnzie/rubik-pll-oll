@@ -10,6 +10,7 @@ import { PLLView } from './views/PLLView';
 import { PracticeView } from './views/PracticeView';
 import { AlgorithmDetailModal } from './components/AlgorithmDetailModal';
 import { SearchModal } from './components/SearchModal';
+import { NotationModal } from './components/NotationLegend';
 import { AlgorithmCase } from './types';
 import { OLL_CASES, PLL_CASES, ALL_CASES, getCaseById } from './data';
 import {
@@ -25,6 +26,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [selectedCase, setSelectedCase] = useState<AlgorithmCase | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isNotationOpen, setIsNotationOpen] = useState<boolean>(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [weakCases, setWeakCases] = useState<WeakCaseItem[]>([]);
@@ -113,6 +115,7 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenNotation={() => setIsNotationOpen(true)}
         favoritesCount={favorites.length}
       />
 
@@ -172,6 +175,8 @@ export default function App() {
         onToggleFavorite={handleToggleFavorite}
         onNavigateCase={handleNavigateCase}
       />
+
+      <NotationModal open={isNotationOpen} onClose={() => setIsNotationOpen(false)} />
 
       {/* Fast Live Search Modal */}
       <SearchModal
