@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { X, Star, Copy, Check, Eye, Box, ArrowLeft, ArrowRight, Share2, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Star, Copy, Check, Eye, Box, ArrowLeft, ArrowRight, RefreshCw, BookOpen } from 'lucide-react';
 import { AlgorithmCase, AlgorithmVariant } from '../types';
 import { CubeSvg } from './CubeSvg';
-import { Cube3D } from './Cube3D';
+import { Cube3D, CubeTransition } from './Cube3D';
 import { AlgorithmPlayer } from './AlgorithmPlayer';
-import { createSolvedCube, CubeState, invertAlgorithm } from '../utils/cubeState';
+import { NotationModal } from './NotationLegend';
+import { CubeState, decomposeMove, invertAlgorithm } from '../utils/cubeState';
+import { caseStateFromAlgorithm } from '../utils/caseAnalysis';
+import { describeMove, uniqueMoveTokens } from '../utils/notation';
 
 interface AlgorithmDetailModalProps {
   caseData: AlgorithmCase | null;
@@ -14,32 +17,37 @@ interface AlgorithmDetailModalProps {
   onNavigateCase?: (direction: 'prev' | 'next') => void;
 }
 
-export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
+export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = props => {
+  if (!props.caseData) return null;
+  return <ModalBody {...props} caseData={props.caseData} />;
+};
+
+const ModalBody: React.FC<AlgorithmDetailModalProps & { caseData: AlgorithmCase }> = ({
   caseData,
   onClose,
   isFavorite,
   onToggleFavorite,
   onNavigateCase,
 }) => {
-  if (!caseData) return null;
-
+  const simulatable = caseData.simulatable !== false;
   const [selectedAlgoId, setSelectedAlgoId] = useState<string>(
     caseData.algorithms[0]?.id || ''
   );
   const [copied, setCopied] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
-  const [activeMove, setActiveMove] = useState<string>('');
-  const [currentCubeState, setCurrentCubeState] = useState<CubeState>(createSolvedCube());
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>(simulatable ? '3d' : '2d');
+  const [currentCubeState, setCurrentCubeState] = useState<CubeState | null>(null);
+  const [transition, setTransition] = useState<CubeTransition | null>(null);
   const [aufAngle, setAufAngle] = useState<number>(0);
+  const [notationOpen, setNotationOpen] = useState<boolean>(false);
 
   // Reset selected algorithm when case changes
   useEffect(() => {
     setSelectedAlgoId(
       caseData.algorithms.find(a => a.isPreferred)?.id || caseData.algorithms[0]?.id || ''
     );
-    setCurrentCubeState(createSolvedCube());
-    setActiveMove('');
+    setTransition(null);
     setAufAngle(0);
+    setViewMode(caseData.simulatable === false ? '2d' : '3d');
   }, [caseData.id]);
 
   // Handle escape key
@@ -66,6 +74,18 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
 
   const setupMove = invertAlgorithm(currentAlgo.notation);
 
+  // Thế bắt đầu = thế bài của case (chạy công thức ngược từ khối đã giải)
+  const startState = useMemo(
+    () => (simulatable ? caseStateFromAlgorithm(currentAlgo.notation) : null),
+    [currentAlgo.notation, simulatable]
+  );
+  const usedTokens = useMemo(() => uniqueMoveTokens(currentAlgo.notation), [currentAlgo.notation]);
+  const usedBases = useMemo(
+    () => Array.from(new Set(usedTokens.map(t => decomposeMove(t)?.base ?? ''))),
+    [usedTokens]
+  );
+  const hasRotation = usedBases.some(b => 'xyz'.includes(b) && b);
+  
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
@@ -154,7 +174,7 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
         {/* Scrollable Content */}
         <div className="overflow-y-auto px-4 py-4 space-y-5">
           {/* Rubik Visualizer Section */}
-          <div className="flex flex-col items-center bg-slate-950/70 border border-slate-800/80 rounded-xl p-4">
+          <div className="flex flex-col items-center bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 gap-3">
             {/* View Mode Switcher */}
             <div className="w-full flex items-center justify-between mb-2">
               <span className="text-xs text-slate-400 font-medium">
@@ -172,10 +192,11 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>2D Mặt trên</span>
+                  <span>2D Nhìn từ trên</span>
                 </button>
                 <button
                   type="button"
+                  disabled={!simulatable}
                   onClick={() => setViewMode('3d')}
                   className={`flex items-center gap-1 px-2 py-1 rounded font-medium transition ${
                     viewMode === '3d'
@@ -184,63 +205,82 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
                   }`}
                 >
                   <Box className="w-3.5 h-3.5" />
-                  <span>3D Khối</span>
+                  <span>3D Khối xoay</span>
                 </button>
               </div>
             </div>
 
             {/* Visual Display */}
             <div className="py-2 flex flex-col items-center justify-center min-h-[160px] w-full">
-              {/* AUF Quick Orientation Selector for matching physical cube */}
-              <div className="flex items-center gap-1.5 mb-2.5 bg-slate-900/80 px-2 py-1 rounded-xl border border-slate-800 text-[11px]">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <RefreshCw className="w-3 h-3 text-blue-400" />
-                  Xoay góc AUF:
-                </span>
-                {[
-                  { deg: 0, label: '0°' },
-                  { deg: 90, label: 'U (90°)' },
-                  { deg: 180, label: 'U2 (180°)' },
-                  { deg: 270, label: "U' (270°)" },
-                ].map(item => (
-                  <button
-                    key={item.deg}
-                    type="button"
-                    onClick={() => setAufAngle(item.deg)}
-                    className={`px-2 py-0.5 rounded-md font-medium transition ${
-                      aufAngle === item.deg
-                        ? 'bg-blue-600 text-white font-bold shadow'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                    }`}
+              {viewMode === '2d' ? (
+                <>
+                  {/* AUF Quick Orientation Selector for matching physical cube */}
+                  <div className="flex items-center gap-1.5 mb-2.5 bg-slate-900/80 px-2 py-1 rounded-xl border border-slate-800 text-[11px]">
+                    <span className="text-slate-400 flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3 text-blue-400" />
+                      Xoay góc AUF:
+                    </span>
+                    {[
+                      { deg: 0, label: '0°' },
+                      { deg: 90, label: 'U (90°)' },
+                      { deg: 180, label: 'U2 (180°)' },
+                      { deg: 270, label: "U' (270°)" },
+                    ].map(item => (
+                      <button
+                        key={item.deg}
+                        type="button"
+                        onClick={() => setAufAngle(item.deg)}
+                        className={`px-2 py-0.5 rounded-md font-medium transition ${
+                          aufAngle === item.deg
+                            ? 'bg-blue-600 text-white font-bold shadow'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div
+                    className="transition-transform duration-200 flex items-center justify-center"
+                    style={{ transform: `rotate(${aufAngle}deg)` }}
                   >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-              <div
-                className="transition-transform duration-200 flex items-center justify-center"
-                style={{ transform: `rotate(${aufAngle}deg)` }}
-              >
-                {viewMode === '2d' ? (
-                  <CubeSvg caseData={caseData} size={150} />
-                ) : (
-                  <Cube3D
-                    cubeState={currentCubeState}
-                    activeMove={activeMove}
-                    size={190}
-                  />
-                )}
-              </div>
+                    <CubeSvg caseData={caseData} size={210} showLabels />
+                  </div>
+                </>
+              ) : (
+                currentCubeState && <Cube3D cubeState={currentCubeState} transition={transition} size={280} />
+              )}
             </div>
 
             <div className="text-[11px] text-slate-400 text-center mt-1 flex flex-col gap-0.5">
               <span>
                 {viewMode === '2d'
-                  ? 'Mặt trên (U) và các vệt màu bên cạnh. Dùng nút "Xoay góc AUF" để khớp với hướng khối bạn đang cầm.'
-                  : 'Mô phỏng 3D: U (vàng), F (xanh lá), R (đỏ). Cập nhật theo từng bước chạy.'}
+                  ? 'Nhìn từ trên xuống: F (mặt trước) ở phía dưới. Dùng "Xoay góc AUF" để khớp hướng khối bạn đang cầm.'
+                  : 'Đây là thế bài của case. Bấm ▶ ở bộ mô phỏng bên dưới: từng lớp sẽ xoay thật cho đến khi khối được giải.'}
               </span>
             </div>
+
+              {/* Step-by-Step Animation Player */}
+            {simulatable && startState ? (
+              <div className="w-full">
+                <h3 className="sr-only">
+                  Mô phỏng từng bước
+                </h3>
+                <AlgorithmPlayer
+                  algorithm={currentAlgo.notation}
+                  startState={startState}
+                  onStepChange={({ state, transition: t }) => {
+                    setCurrentCubeState(state);
+                    setTransition(t);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-400 leading-relaxed">
+                Case này chỉ có trên Rubik 4x4 (lớp trong / "Uw", "Rw"), nên không mô phỏng được trên khối 3x3.
+              </div>
+            )}
+
           </div>
 
           {/* Special recognition note for cases with Mirror/Reverse like T-Perm */}
@@ -295,18 +335,45 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
             )}
           </div>
 
-          {/* Step-by-Step Animation Player */}
+          {/* Ký hiệu dùng trong công thức */}
           <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Mô phỏng từng bước (Step-by-step Player)
-            </h3>
-            <AlgorithmPlayer
-              algorithm={currentAlgo.notation}
-              onStepChange={(_stepIdx, move, state) => {
-                setActiveMove(move);
-                setCurrentCubeState(state);
-              }}
-            />
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Ký hiệu trong công thức này
+              </h3>
+              <button
+                type="button"
+                onClick={() => setNotationOpen(true)}
+                className="flex items-center gap-1 text-xs text-amber-400 hover:underline"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Bảng ký hiệu đầy đủ
+              </button>
+            </div>
+            <div className="grid gap-1.5">
+              {usedTokens.map(tok => {
+                const d = describeMove(tok);
+                if (!d) return null;
+                return (
+                  <div key={tok} className="flex items-start gap-2.5 rounded-lg border border-slate-800 bg-slate-950/50 px-2.5 py-2">
+                    <span className="shrink-0 flex items-center justify-center gap-1 min-w-[3.4rem] px-2 py-1 rounded-md bg-slate-800 text-amber-400 font-mono font-black text-sm">
+                      {d.token}
+                      <span className="text-base leading-none">{d.arrow}</span>
+                    </span>
+                    <div className="text-xs leading-relaxed text-slate-300">
+                      <div className="font-semibold text-slate-200">{d.title.split(' — ')[1]}</div>
+                      <div className="text-slate-400">{d.detail}</div>
+                      {d.modifier && <div className="text-slate-500">{d.modifier}</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {hasRotation && (
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                x / y / z chỉ là xoay cả khối để đổi cách cầm — các viên không đổi chỗ so với nhau.
+              </p>
+            )}
           </div>
 
           {/* Alternative Algorithms (if available) */}
@@ -370,6 +437,7 @@ export const AlgorithmDetailModal: React.FC<AlgorithmDetailModalProps> = ({
           </div>
         </div>
       </div>
+      <NotationModal open={notationOpen} onClose={() => setNotationOpen(false)} highlightBases={usedBases} />
     </div>
   );
 };

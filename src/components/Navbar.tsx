@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Target, Search, Bookmark, Zap } from 'lucide-react';
+import { Home, Target, Search, BookOpen } from 'lucide-react';
 
 export type NavTab = 'home' | 'oll' | 'pll' | 'practice';
 
@@ -7,6 +7,7 @@ interface NavbarProps {
   currentTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   onOpenSearch: () => void;
+  onOpenNotation: () => void;
   favoritesCount: number;
 }
 
@@ -14,6 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onTabChange,
   onOpenSearch,
+  onOpenNotation,
   favoritesCount,
 }) => {
   return (
@@ -91,6 +93,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenNotation}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-amber-300 hover:border-amber-500/40 text-xs font-semibold transition"
+            title="Bảng ký hiệu xoay: R, U, M', x..."
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Ký hiệu
+          </button>
           {/* Quick Search Bar Trigger */}
           <button
             type="button"
@@ -168,6 +179,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Target className="w-5 h-5 mb-0.5" />
           <span className="text-[10px] font-medium">Luyện tập</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onOpenNotation}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200"
+          aria-label="Bảng ký hiệu xoay"
+        >
+          <BookOpen className="w-5 h-5 mb-0.5" />
+          <span className="text-[10px] font-medium">Ký hiệu</span>
         </button>
 
         <button
