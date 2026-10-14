@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Target, Search, BookOpen } from 'lucide-react';
 
-export type NavTab = 'home' | 'oll' | 'pll' | 'practice';
+export type NavTab = 'home' | 'oll' | 'pll' | 'zb' | 'practice';
 
 interface NavbarProps {
   currentTab: NavTab;
@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onTabChange('home')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
                 currentTab === 'home'
                   ? 'bg-slate-800 text-amber-400 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
@@ -56,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onTabChange('oll')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
                 currentTab === 'oll'
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onTabChange('pll')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
                 currentTab === 'pll'
                   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
@@ -79,15 +79,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => onTabChange('zb')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
+                currentTab === 'zb'
+                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-violet-400"></span>
+              <span>ZBLS / ZBLL</span>
+            </button>
+            <button
+              type="button"
               onClick={() => onTabChange('practice')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
                 currentTab === 'practice'
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
               }`}
             >
               <Target className="w-4 h-4" />
-              <span>Luyện tập & Timer</span>
+              <span className="hidden lg:inline">Luyện tập & Timer</span>
+              <span className="lg:hidden">Luyện tập</span>
             </button>
           </nav>
         </div>
@@ -96,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onOpenNotation}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-amber-300 hover:border-amber-500/40 text-xs font-semibold transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 whitespace-nowrap text-slate-300 hover:text-amber-300 hover:border-amber-500/40 text-xs font-semibold transition"
             title="Bảng ký hiệu xoay: R, U, M', x..."
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -106,13 +119,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-xs transition w-48 justify-between"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-xs transition lg:w-48 justify-between"
+            aria-label="Tìm kiếm công thức"
           >
             <div className="flex items-center gap-2">
               <Search className="w-3.5 h-3.5 text-slate-500" />
-              <span>Tìm OLL, PLL, case...</span>
+              <span className="hidden lg:inline">Tìm OLL, PLL, ZB...</span>
             </div>
-            <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-800 text-slate-400 rounded font-mono border border-slate-700">
+            <kbd className="hidden lg:inline px-1.5 py-0.5 text-[10px] bg-slate-800 text-slate-400 rounded font-mono border border-slate-700">
               /
             </kbd>
           </button>
@@ -124,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => onTabChange('home')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
             currentTab === 'home'
               ? 'text-amber-400 font-bold scale-105'
               : 'text-slate-400 hover:text-slate-200'
@@ -137,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => onTabChange('oll')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition relative ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
             currentTab === 'oll'
               ? 'text-amber-400 font-bold scale-105'
               : 'text-slate-400 hover:text-slate-200'
@@ -154,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={() => onTabChange('pll')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition relative ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
             currentTab === 'pll'
               ? 'text-blue-400 font-bold scale-105'
               : 'text-slate-400 hover:text-slate-200'
@@ -170,8 +184,23 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <button
           type="button"
+          onClick={() => onTabChange('zb')}
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
+            currentTab === 'zb'
+              ? 'text-violet-300 font-bold scale-105'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <div className="w-5 h-5 rounded-md border-2 border-violet-400 bg-violet-400/20 flex items-center justify-center font-bold text-[9px] text-violet-200">
+            ZB
+          </div>
+          <span className="text-[10px] font-medium mt-0.5">ZB</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => onTabChange('practice')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition ${
             currentTab === 'practice'
               ? 'text-emerald-400 font-bold scale-105'
               : 'text-slate-400 hover:text-slate-200'
@@ -184,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onOpenNotation}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200"
+          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200"
           aria-label="Bảng ký hiệu xoay"
         >
           <BookOpen className="w-5 h-5 mb-0.5" />
@@ -194,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onOpenSearch}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200"
+          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-slate-400 hover:text-slate-200"
           aria-label="Tìm kiếm công thức"
         >
           <Search className="w-5 h-5 mb-0.5" />

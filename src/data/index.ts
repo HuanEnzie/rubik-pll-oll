@@ -1,11 +1,22 @@
 import { AlgorithmCase, CaseType } from '../types';
 import { OLL_CASES } from './ollCases';
 import { PLL_CASES } from './pllCases';
+import { ZBLL_CASES } from './zbllCases';
+import { ZBLS_CASES } from './zblsCases';
 
 export { OLL_CASES } from './ollCases';
 export { PLL_CASES } from './pllCases';
+export { ZBLL_CASES } from './zbllCases';
+export { ZBLS_CASES } from './zblsCases';
 
-export const ALL_CASES: AlgorithmCase[] = [...OLL_CASES, ...PLL_CASES];
+export const ALL_CASES: AlgorithmCase[] = [...OLL_CASES, ...PLL_CASES, ...ZBLS_CASES, ...ZBLL_CASES];
+
+export const CASES_BY_TYPE: Record<CaseType, AlgorithmCase[]> = {
+  OLL: OLL_CASES,
+  PLL: PLL_CASES,
+  ZBLS: ZBLS_CASES,
+  ZBLL: ZBLL_CASES,
+};
 
 const CASES_BY_ID = new Map<string, AlgorithmCase>();
 for (const c of ALL_CASES) {
@@ -35,11 +46,7 @@ function normalizeSearchText(str: string): string {
 
 export function searchCases(query: string, type?: CaseType): AlgorithmCase[] {
   const rawQ = query.trim();
-  if (!rawQ) {
-    if (type === 'OLL') return OLL_CASES;
-    if (type === 'PLL') return PLL_CASES;
-    return ALL_CASES;
-  }
+  if (!rawQ) return type ? CASES_BY_TYPE[type] : ALL_CASES;
 
   const normQ = normalizeSearchText(rawQ);
   const qTokens = normQ.split(/\s+/).filter(Boolean);
@@ -51,7 +58,7 @@ export function searchCases(query: string, type?: CaseType): AlgorithmCase[] {
 
   return pool.filter(c => {
     // Check direct ID or number
-    if (c.number.toString() === rawQ) return true;
+    if ((c.type === 'OLL' || c.type === 'PLL') && c.number.toString() === rawQ) return true;
     if (c.id === rawQ.toLowerCase()) return true;
 
     // Check searchable string: name + aka + category + tags + groupNameVi + algorithms

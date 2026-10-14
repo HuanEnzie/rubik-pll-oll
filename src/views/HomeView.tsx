@@ -3,12 +3,13 @@ import { Search, Star, History, Target, ArrowRight, Zap, Sparkles } from 'lucide
 import { AlgorithmCase } from '../types';
 import { AlgorithmCard } from '../components/AlgorithmCard';
 import { WeakCaseItem } from '../utils/storage';
-import { getCaseById } from '../data';
+import { getCaseById, ZBLS_CASES, ZBLL_CASES } from '../data';
 import { CubeSvg } from '../components/CubeSvg';
 
 interface HomeViewProps {
   onSelectOLL: () => void;
   onSelectPLL: () => void;
+  onSelectZB: (kind: 'ZBLS' | 'ZBLL') => void;
   onSelectPractice: (practiceMode?: 'weak' | 'all') => void;
   onOpenSearch: () => void;
   recentCases: AlgorithmCase[];
@@ -22,6 +23,7 @@ interface HomeViewProps {
 export const HomeView: React.FC<HomeViewProps> = ({
   onSelectOLL,
   onSelectPLL,
+  onSelectZB,
   onSelectPractice,
   onOpenSearch,
   recentCases,
@@ -98,6 +100,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <ArrowRight className="w-6 h-6" />
           </div>
         </button>
+      </div>
+
+      {/* --- ZB NÂNG CAO --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 -mt-4">
+        {([
+          { kind: 'ZBLS' as const, title: `ZBLS — ${ZBLS_CASES.length} cases`, sub: 'Cặp F2L cuối + định hướng cạnh tầng trên', color: 'teal' },
+          { kind: 'ZBLL' as const, title: `ZBLL — ${ZBLL_CASES.length} cases`, sub: 'Giải tầng cuối 1 lần khi đã có chữ thập vàng', color: 'violet' },
+        ]).map(item => (
+          <button
+            key={item.kind}
+            type="button"
+            onClick={() => onSelectZB(item.kind)}
+            className={`group flex items-center justify-between p-4 bg-slate-900 border rounded-2xl transition text-left active:scale-[0.99] cursor-pointer ${
+              item.color === 'teal'
+                ? 'border-teal-500/25 hover:border-teal-400/70'
+                : 'border-violet-500/25 hover:border-violet-400/70'
+            }`}
+          >
+            <div className="space-y-0.5">
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${item.color === 'teal' ? 'text-teal-300' : 'text-violet-300'}`}>
+                Nâng cao · ZB method
+              </span>
+              <div className="text-lg font-black text-slate-100">{item.title}</div>
+              <p className="text-xs text-slate-400">{item.sub}</p>
+            </div>
+            <ArrowRight className={`w-5 h-5 shrink-0 ml-3 group-hover:translate-x-1 transition ${item.color === 'teal' ? 'text-teal-300' : 'text-violet-300'}`} />
+          </button>
+        ))}
       </div>
 
       {/* --- QUICK SEARCH BAR --- */}

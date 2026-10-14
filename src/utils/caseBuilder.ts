@@ -4,7 +4,7 @@
  * nên không bao giờ lệch với công thức.
  */
 import { AlgorithmCase, AlgorithmVariant, PLLPattern } from '../types';
-import { caseStateFromAlgorithm, edgeGroupOf, ollPatternFromState, pllPatternFromState } from './caseAnalysis';
+import { caseStateFromAlgorithm, edgeGroupOf, llPatternFromState, ollPatternFromState, pllPatternFromState } from './caseAnalysis';
 import { decomposeMove, parseAlgorithmMoves } from './cubeState';
 
 export type OllFamily =
@@ -50,11 +50,11 @@ export function describeAlgorithm(notation: string): string {
   return `${n} nước${feats.length ? ' · ' + feats.join(', ') : ''}`;
 }
 
-function toVariants(prefix: string, algs: string[]): AlgorithmVariant[] {
+function toVariants(prefix: string, algs: string[], firstLabel = 'Công thức chuẩn'): AlgorithmVariant[] {
   return algs.map((notation, i) => ({
     id: `${prefix}-${i + 1}`,
     notation,
-    description: i === 0 ? `Công thức chuẩn · ${describeAlgorithm(notation)}` : `Biến thể · ${describeAlgorithm(notation)}`,
+    description: i === 0 ? `${firstLabel} · ${describeAlgorithm(notation)}` : `Biến thể · ${describeAlgorithm(notation)}`,
     isPreferred: i === 0,
   }));
 }
@@ -108,5 +108,72 @@ export function buildPllCase(def: PllDef): AlgorithmCase {
     pllPattern,
     algorithms: toVariants(def.key.toLowerCase(), def.algs),
     tags: [def.category.toLowerCase(), def.key.toLowerCase(), `${def.key.toLowerCase()} perm`],
+  };
+}
+
+/* ------------------------------ ZBLL ------------------------------ */
+
+export const ZBLL_SETS = ['T', 'U', 'L', 'H', 'Pi', 'S', 'AS'] as const;
+
+export const ZBLL_SET_VI: Record<string, string> = {
+  T: 'T (Chameleon · OLL 24)',
+  U: 'U (Headlights · OLL 23)',
+  L: 'L (Bowtie · OLL 25)',
+  H: 'H (OLL 21)',
+  Pi: 'Pi (OLL 22)',
+  S: 'S (Sune · OLL 27)',
+  AS: 'AS (Anti-Sune · OLL 26)',
+};
+
+const ZBLL_CP_VI: Record<string, string> = {
+  solved: 'góc đúng chỗ',
+  diag: 'đổi 2 góc chéo',
+  adj: 'đổi 2 góc kề',
+};
+
+export interface ZbllDefLike { set: string; n: number; sub: number; cp: string; algs: string[] }
+
+export function buildZbllCase(def: ZbllDefLike): AlgorithmCase {
+  const state = caseStateFromAlgorithm(def.algs[0]);
+  const id = `zbll-${def.set.toLowerCase()}-${def.n}`;
+  return {
+    id,
+    type: 'ZBLL',
+    number: def.n,
+    name: `ZBLL ${def.set}${def.n}`,
+    aka: [`${def.set} · COLL ${def.sub}`, ZBLL_CP_VI[def.cp]],
+    category: def.set,
+    groupNameVi: `Nhóm ${def.set} · tập COLL ${def.sub} (${ZBLL_CP_VI[def.cp]})`,
+    llPattern: llPatternFromState(state),
+    algorithms: toVariants(id, def.algs, 'Công thức đề xuất'),
+    tags: ['zbll', def.set.toLowerCase(), `${def.set.toLowerCase()}${def.n}`, `coll ${def.sub}`, ZBLL_CP_VI[def.cp]],
+  };
+}
+
+/* ------------------------------ ZBLS ------------------------------ */
+
+export const ZBLS_LOCS = ['both-u', 'corner-slot', 'edge-slot', 'both-slot'] as const;
+
+export const ZBLS_LOC_VI: Record<string, string> = {
+  'both-u': 'Góc & cạnh ở tầng trên',
+  'corner-slot': 'Góc trong khe, cạnh ở trên',
+  'edge-slot': 'Cạnh trong khe, góc ở trên',
+  'both-slot': 'Cả cặp trong khe',
+};
+
+export interface ZblsDefLike { n: number; loc: string; f2l: number; algs: string[] }
+
+export function buildZblsCase(def: ZblsDefLike): AlgorithmCase {
+  const id = `zbls-${def.n}`;
+  return {
+    id,
+    type: 'ZBLS',
+    number: def.n,
+    name: `ZBLS ${def.n}`,
+    aka: [ZBLS_LOC_VI[def.loc]],
+    category: def.loc,
+    groupNameVi: `${ZBLS_LOC_VI[def.loc]} · thế cặp ${def.f2l}`,
+    algorithms: toVariants(id, def.algs, 'Công thức đề xuất'),
+    tags: ['zbls', 'zbf2l', def.loc, `thế cặp ${def.f2l}`],
   };
 }

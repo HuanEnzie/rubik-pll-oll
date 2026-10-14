@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Target, Timer as TimerIcon, Trophy, RotateCcw, ArrowRight, CheckCircle2, XCircle, AlertCircle, Play, Eye } from 'lucide-react';
 import { AlgorithmCase, CaseType, TimerSolve } from '../types';
-import { CubeSvg } from '../components/CubeSvg';
+import { CaseVisual } from '../components/CaseVisual';
 import {
   getPracticeStats,
   recordPracticeResult,
@@ -17,15 +17,21 @@ import { getCaseById } from '../data';
 interface PracticeViewProps {
   ollCases: AlgorithmCase[];
   pllCases: AlgorithmCase[];
+  zblsCases: AlgorithmCase[];
+  zbllCases: AlgorithmCase[];
   initialMode?: 'weak' | 'all';
   onOpenDetail: (caseData: AlgorithmCase) => void;
 }
 
-type QuizPoolType = 'OLL' | 'PLL' | 'BOTH' | 'WEAK';
+type QuizPoolType = 'OLL' | 'PLL' | 'BOTH' | 'ZBLS' | 'ZBLL' | 'WEAK';
+
+const isZB = (c: AlgorithmCase) => c.type === 'ZBLS' || c.type === 'ZBLL';
 
 export const PracticeView: React.FC<PracticeViewProps> = ({
   ollCases,
   pllCases,
+  zblsCases,
+  zbllCases,
   initialMode = 'all',
   onOpenDetail,
 }) => {
@@ -62,6 +68,8 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
     if (type === 'OLL') pool = ollCases;
     else if (type === 'PLL') pool = pllCases;
     else if (type === 'BOTH') pool = [...ollCases, ...pllCases];
+    else if (type === 'ZBLS') pool = zblsCases;
+    else if (type === 'ZBLL') pool = zbllCases;
     else if (type === 'WEAK') {
       const weaks = getWeakCases();
       pool = weaks
@@ -80,9 +88,14 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
     setIsAnswered(false);
 
     // Generate 4 multi-choice options (1 correct, 3 distractors of same type if possible)
-    const sameTypePool = (chosen.type === 'OLL' ? ollCases : pllCases).filter(
-      c => c.id !== chosen.id
-    );
+    const typePool = { OLL: ollCases, PLL: pllCases, ZBLS: zblsCases, ZBLL: zbllCases }[chosen.type];
+    let sameTypePool = typePool.filter(c => c.id !== chosen.id);
+    // ZB: số thứ tự không có ý nghĩa, nên hỏi "công thức nào" với các case cùng tập con (dễ nhầm nhất)
+    if (isZB(chosen)) {
+      const sameGroup = sameTypePool.filter(c => c.groupNameVi === chosen.groupNameVi);
+      const sameCat = sameTypePool.filter(c => c.category === chosen.category);
+      sameTypePool = sameGroup.length >= 3 ? sameGroup : sameCat.length >= 3 ? sameCat : sameTypePool;
+    }
     // Shuffle distractors
     const shuffledDistractors = [...sameTypePool].sort(() => 0.5 - Math.random());
     const distractors = shuffledDistractors.slice(0, 3);
@@ -232,9 +245,9 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
         <div className="space-y-4">
           {/* Practice Pool Selector */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-1 text-xs">
+            <div className="flex items-center gap-1 text-xs flex-wrap">
               <span className="text-slate-500 mr-1">Bộ luyện:</span>
-              {(['BOTH', 'OLL', 'PLL', 'WEAK'] as const).map(pt => (
+              {(['BOTH', 'OLL', 'PLL', 'ZBLS', 'ZBLL', 'WEAK'] as const).map(pt => (
                 <button
                   key={pt}
                   type="button"
@@ -251,6 +264,10 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                     ? 'OLL (57)'
                     : pt === 'PLL'
                     ? 'PLL (21)'
+                    : pt === 'ZBLS'
+                    ? `ZBLS (${zblsCases.length})`
+                    : pt === 'ZBLL'
+                    ? `ZBLL (${zbllCases.length})`
                     : 'Case yếu'}
                 </button>
               ))}
@@ -284,7 +301,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
 
               {/* Central Pattern */}
               <div className="flex items-center justify-center p-4 bg-slate-950 rounded-xl border border-slate-800/80 max-w-[220px] mx-auto aspect-square">
-                <CubeSvg caseData={currentCase} size={150} />
+                <CaseVisual caseData={currentCase} size={150} />
               </div>
 
               {/* 4 Choices */}
@@ -320,8 +337,10 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                       className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between gap-1 select-none active:scale-[0.99] ${btnStyle}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-base">{opt.name}</span>
-                        {opt.aka && opt.aka.length > 0 && (
+                        <span className="font-bold text-base">
+                          {isZB(currentCase) && !isAnswered ? 'Công thức nào?' : opt.name}
+                        </span>
+                        {!isZB(currentCase) && opt.aka && opt.aka.length > 0 && (
                           <span className="text-xs text-slate-400">
                             {opt.aka[0]}
                           </span>
@@ -333,7 +352,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                           <XCircle className="w-4 h-4 text-rose-400" />
                         )}
                       </div>
-                      <div className="text-xs font-mono text-slate-400 truncate">
+                      <div className={`text-xs font-mono text-slate-400 ${isZB(currentCase) ? 'break-words' : 'truncate'}`}>
                         {preferredAlgo.notation}
                       </div>
                     </button>
@@ -428,7 +447,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({
                     className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition cursor-pointer flex items-center gap-3"
                   >
                     <div className="w-12 h-12 bg-slate-950 rounded-lg border border-slate-850 flex items-center justify-center p-1 shrink-0">
-                      <CubeSvg caseData={c} size={42} showArrows={false} />
+                      <CaseVisual caseData={c} size={42} showArrows={false} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">

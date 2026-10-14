@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Star, ArrowRight } from 'lucide-react';
-import { searchCases } from '../data';
+import { searchCases, CASES_BY_TYPE, ALL_CASES } from '../data';
 import { AlgorithmCase, CaseType } from '../types';
 import { CubeSvg } from './CubeSvg';
+import { CubeIso } from './CubeIso';
+import { TYPE_BADGE } from '../utils/caseTypeStyle';
+
+const MAX_RESULTS = 60; // ZBLL + ZBLS có gần 800 case, chỉ vẽ một phần đầu
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -96,9 +100,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-800/80 bg-slate-950/40 text-xs">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-800/80 bg-slate-950/40 text-xs overflow-x-auto no-scrollbar whitespace-nowrap">
           <span className="text-slate-500">Lọc:</span>
-          {(['ALL', 'OLL', 'PLL'] as const).map(type => (
+          {(['ALL', 'OLL', 'PLL', 'ZBLS', 'ZBLL'] as const).map(type => (
             <button
               key={type}
               type="button"
@@ -109,11 +113,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   : 'bg-slate-800/60 text-slate-400 hover:text-slate-200'
               }`}
             >
-              {type === 'ALL' ? 'Tất cả (78)' : type === 'OLL' ? 'OLL (57)' : 'PLL (21)'}
+              {type === 'ALL' ? `Tất cả (${ALL_CASES.length})` : `${type} (${CASES_BY_TYPE[type].length})`}
             </button>
           ))}
           <span className="ml-auto text-slate-500 font-mono">
-            {results.length} kết quả
+            {results.length > MAX_RESULTS ? `${MAX_RESULTS}/${results.length}` : results.length} kết quả
           </span>
         </div>
 
@@ -123,11 +127,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <div className="py-12 text-center text-slate-400">
               <p className="text-sm font-medium">Không tìm thấy case nào phù hợp với "{query}"</p>
               <p className="text-xs text-slate-500 mt-1">
-                Thử tìm: "21", "T perm", "Sune", "H perm", hoặc "R U R'"
+                Thử tìm: "21", "T perm", "Sune", "ZBLL T5", "ZBLS 12" hoặc "R U R'"
               </p>
             </div>
           ) : (
-            results.map(c => {
+            results.slice(0, MAX_RESULTS).map(c => {
               const isFav = favorites.includes(c.id);
               const preferredAlgo =
                 c.algorithms.find(a => a.isPreferred) || c.algorithms[0];
@@ -143,18 +147,18 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 >
                   {/* Pattern Visualizer Preview */}
                   <div className="w-12 h-12 shrink-0 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center p-1">
-                    <CubeSvg caseData={c} size={42} showArrows={false} />
+                    {c.type === 'ZBLS' ? (
+                      <CubeIso caseData={c} size={42} />
+                    ) : (
+                      <CubeSvg caseData={c} size={42} showArrows={false} />
+                    )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                          c.type === 'OLL'
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-blue-500/20 text-blue-400'
-                        }`}
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${TYPE_BADGE[c.type]}`}
                       >
                         {c.type}
                       </span>

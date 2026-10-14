@@ -2,6 +2,7 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import { AlgorithmCase } from '../types';
 import { CaseVisual } from './CaseVisual';
+import { TYPE_BADGE } from '../utils/caseTypeStyle';
 
 interface AlgorithmCardProps {
   caseData: AlgorithmCase;
@@ -19,7 +20,6 @@ export const AlgorithmCard: React.FC<AlgorithmCardProps> = ({
   className = '',
 }) => {
   const preferredAlgo = caseData.algorithms.find(a => a.isPreferred) || caseData.algorithms[0];
-  const isOLL = caseData.type === 'OLL';
 
   return (
     <div
@@ -37,17 +37,14 @@ export const AlgorithmCard: React.FC<AlgorithmCardProps> = ({
       {/* Header: Type/Number & Favorite Button */}
       <div className="w-full flex items-center justify-between gap-1 mb-2">
         <div className="flex items-center gap-1.5">
-          <span
-            className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-              isOLL
-                ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
-            }`}
-          >
+          <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${TYPE_BADGE[caseData.type]}`}>
             {caseData.type}
           </span>
           <span className="font-bold text-slate-100 text-sm tracking-tight">
-            {caseData.name}
+            {/* ZBLL/ZBLS: nhãn loại đã hiện ở badge nên chỉ ghi phần sau (vd. "T12") */}
+            {caseData.type === 'ZBLL' || caseData.type === 'ZBLS'
+              ? caseData.name.slice(caseData.type.length + 1)
+              : caseData.name}
           </span>
         </div>
 

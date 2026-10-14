@@ -66,10 +66,39 @@ function stateFor(alg: string): CubeState {
   return s;
 }
 
+// Các sticker cùng một viên (cubie), để biết sticker nào thuộc viên tầng trên
+const CUBIE_STICKERS = (() => {
+  const map = new Map<string, { face: keyof CubeState; r: number; c: number }[]>();
+  for (const face of ['U', 'D', 'F', 'B', 'L', 'R'] as const) {
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      const k = FACELET_POS[face](r, c).pos.join(',');
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push({ face, r, c });
+    }
+  }
+  return [...map.values()];
+})();
+
+/**
+ * ZBLS: chỉ cặp FR và hướng các cạnh tầng trên là quan trọng.
+ * Trả về tập sticker cần vẽ xám: mọi sticker của góc tầng trên, và sticker không vàng của cạnh tầng trên.
+ */
+function zblsGrayMask(s: CubeState): Set<string> {
+  const gray = new Set<string>();
+  for (const stickers of CUBIE_STICKERS) {
+    if (!stickers.some(st => s[st.face][st.r][st.c] === 0)) continue; // không phải viên tầng trên
+    for (const st of stickers) {
+      if (stickers.length === 3 || s[st.face][st.r][st.c] !== 0) gray.add(`${st.face}${st.r}${st.c}`);
+    }
+  }
+  return gray;
+}
+
 /**
  * Khối 3D đẳng cự (SVG, không dùng WebGL nên vẽ được hàng chục thẻ cùng lúc).
  * Thấy 3 mặt U/F/R; hàng trên của mặt B và L được "gập" ra phía sau mặt U để không mất thông tin nhận diện.
  * OLL: sticker tầng trên không vàng vẽ xám (màu thật không quan trọng), hai tầng dưới giữ màu thật.
+ * ZBLS: góc tầng trên vẽ xám hết, cạnh tầng trên chỉ giữ màu vàng; cặp F2L giữ màu thật.
  */
 export const CubeIso: React.FC<CubeIsoProps> = ({ caseData, size = 120, className = '' }) => {
   const isOll = caseData.type === 'OLL';
@@ -78,8 +107,10 @@ export const CubeIso: React.FC<CubeIsoProps> = ({ caseData, size = 120, classNam
   const small = size < 90;
   const sw = small ? 0.9 : 0.7;
 
-  const colorOf = (color: number, topLayer: boolean) =>
-    isOll && topLayer && color !== 0 ? GRAY : COLORS[color];
+  const zblsGray = useMemo(() => (caseData.type === 'ZBLS' ? zblsGrayMask(state) : null), [caseData.type, state]);
+
+  const colorOf = (color: number, topLayer: boolean, key: string) =>
+    (isOll && topLayer && color !== 0) || zblsGray?.has(key) ? GRAY : COLORS[color];
 
   const faces = (['U', 'F', 'R'] as const).map(face => {
     const polys: React.ReactNode[] = [];
@@ -93,7 +124,7 @@ export const CubeIso: React.FC<CubeIsoProps> = ({ caseData, size = 120, classNam
           <polygon
             key={`${face}${r}${c}`}
             points={quad(center, u, v, 0.45, 0.45)}
-            fill={colorOf(state[face][r][c], top)}
+            fill={colorOf(state[face][r][c], top, `${face}${r}${c}`)}
             stroke={BG}
             strokeWidth={sw}
             strokeLinejoin="round"
@@ -124,7 +155,7 @@ export const CubeIso: React.FC<CubeIsoProps> = ({ caseData, size = 120, classNam
       <polygon
         key={`fb${c}`}
         points={quad([b[0], 1.5, -1.84], [1, 0, 0], [0, 0, 1], 0.45, 0.27)}
-        fill={colorOf(state.B[0][c], true)}
+        fill={colorOf(state.B[0][c], true, `B0${c}`)}
         stroke={BG}
         strokeWidth={sw}
         strokeLinejoin="round"
@@ -135,7 +166,7 @@ export const CubeIso: React.FC<CubeIsoProps> = ({ caseData, size = 120, classNam
       <polygon
         key={`fl${c}`}
         points={quad([-1.84, 1.5, l[2]], [0, 0, 1], [1, 0, 0], 0.45, 0.27)}
-        fill={colorOf(state.L[0][c], true)}
+        fill={colorOf(state.L[0][c], true, `L0${c}`)}
         stroke={BG}
         strokeWidth={sw}
         strokeLinejoin="round"

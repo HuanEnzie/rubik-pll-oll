@@ -79,6 +79,7 @@ export const CubeSvg: React.FC<CubeSvgProps> = ({
 }) => {
   const oll = caseData.type === 'OLL' ? caseData.ollPattern : undefined;
   const pll = caseData.type === 'PLL' ? caseData.pllPattern : undefined;
+  const ll = caseData.type === 'ZBLL' ? caseData.llPattern : undefined;
   const markerId = `arrow-${caseData.id}`;
   const small = size < 70;
 
@@ -86,7 +87,13 @@ export const CubeSvg: React.FC<CubeSvgProps> = ({
   const sides: ('N' | 'E' | 'S' | 'W')[] = ['N', 'E', 'S', 'W'];
 
   const sideFill = (side: 'N' | 'E' | 'S' | 'W', i: number) =>
-    oll ? (oll.sides[side][i] ? YELLOW : NOT_YELLOW) : pll ? COLOR_MAP[pll.sideColors[side][i]] ?? NOT_YELLOW : NOT_YELLOW;
+    oll
+      ? oll.sides[side][i] ? YELLOW : NOT_YELLOW
+      : ll
+      ? COLOR_MAP[ll.sides[side][i]] ?? NOT_YELLOW
+      : pll
+      ? COLOR_MAP[pll.sideColors[side][i]] ?? NOT_YELLOW
+      : NOT_YELLOW;
 
   return (
     <svg
@@ -118,7 +125,7 @@ export const CubeSvg: React.FC<CubeSvgProps> = ({
       {[0, 1, 2].map(r =>
         [0, 1, 2].map(c => {
           const isCenter = r === 1 && c === 1;
-          const fill = oll ? (oll.top[r][c] ? YELLOW : NOT_YELLOW) : YELLOW;
+          const fill = oll ? (oll.top[r][c] ? YELLOW : NOT_YELLOW) : ll ? COLOR_MAP[ll.top[r][c]] : YELLOW;
           return (
             <rect
               key={`t-${r}-${c}`}

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Star, Copy, Check, Eye, Box, ArrowLeft, ArrowRight, RefreshCw, BookOpen } from 'lucide-react';
 import { AlgorithmCase, AlgorithmVariant } from '../types';
 import { CubeSvg } from './CubeSvg';
+import { CubeIso } from './CubeIso';
+import { TYPE_BADGE } from '../utils/caseTypeStyle';
 import { Cube3D, CubeTransition } from './Cube3D';
 import { AlgorithmPlayer } from './AlgorithmPlayer';
 import { NotationModal } from './NotationLegend';
@@ -101,11 +103,7 @@ const ModalBody: React.FC<AlgorithmDetailModalProps & { caseData: AlgorithmCase 
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-20">
           <div className="flex items-center gap-2">
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded ${
-                caseData.type === 'OLL'
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-              }`}
+              className={`text-xs font-bold px-2 py-0.5 rounded ${TYPE_BADGE[caseData.type]}`}
             >
               {caseData.type}
             </span>
@@ -215,7 +213,11 @@ const ModalBody: React.FC<AlgorithmDetailModalProps & { caseData: AlgorithmCase 
               {viewMode === '2d' ? (
                 <>
                   {/* AUF Quick Orientation Selector for matching physical cube */}
-                  <div className="flex items-center gap-1.5 mb-2.5 bg-slate-900/80 px-2 py-1 rounded-xl border border-slate-800 text-[11px]">
+                  <div
+                    className={`items-center gap-1.5 mb-2.5 bg-slate-900/80 px-2 py-1 rounded-xl border border-slate-800 text-[11px] ${
+                      caseData.type === 'ZBLS' ? 'hidden' : 'flex'
+                    }`}
+                  >
                     <span className="text-slate-400 flex items-center gap-1">
                       <RefreshCw className="w-3 h-3 text-blue-400" />
                       Xoay góc AUF:
@@ -242,9 +244,13 @@ const ModalBody: React.FC<AlgorithmDetailModalProps & { caseData: AlgorithmCase 
                   </div>
                   <div
                     className="transition-transform duration-200 flex items-center justify-center"
-                    style={{ transform: `rotate(${aufAngle}deg)` }}
+                    style={{ transform: `rotate(${caseData.type === 'ZBLS' ? 0 : aufAngle}deg)` }}
                   >
-                    <CubeSvg caseData={caseData} size={210} showLabels />
+                    {caseData.type === 'ZBLS' ? (
+                      <CubeIso caseData={caseData} size={210} />
+                    ) : (
+                      <CubeSvg caseData={caseData} size={210} showLabels />
+                    )}
                   </div>
                 </>
               ) : (
@@ -254,7 +260,9 @@ const ModalBody: React.FC<AlgorithmDetailModalProps & { caseData: AlgorithmCase 
 
             <div className="text-[11px] text-slate-400 text-center mt-1 flex flex-col gap-0.5">
               <span>
-                {viewMode === '2d'
+                {viewMode === '2d' && caseData.type === 'ZBLS'
+                  ? 'Khe FR nằm giữa mặt F (trái) và R (phải). Sticker xám là phần không ảnh hưởng tới công thức.'
+                  : viewMode === '2d'
                   ? 'Nhìn từ trên xuống: F (mặt trước) ở phía dưới. Dùng "Xoay góc AUF" để khớp hướng khối bạn đang cầm.'
                   : 'Đây là thế bài của case. Bấm ▶ ở bộ mô phỏng bên dưới: từng lớp sẽ xoay thật cho đến khi khối được giải.'}
               </span>

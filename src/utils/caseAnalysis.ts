@@ -2,7 +2,7 @@
  * Phân tích một công thức -> thế bài (case) mà nó giải, rồi rút ra hình 2D / phân loại.
  * Toàn bộ hình ảnh OLL/PLL được SUY RA từ công thức bằng mô phỏng, nên hình và công thức không thể lệch nhau.
  */
-import { OLLPattern, PLLPattern } from '../types';
+import { LLColorPattern, OLLPattern, PLLPattern } from '../types';
 import {
   CubeState,
   FaceIndex,
@@ -179,4 +179,35 @@ export function pllPatternFromState(s: CubeState): PLLPattern {
     }
   }
   return { sideColors, arrows };
+}
+
+/* --------------------------- ZBLL / ZBLS --------------------------- */
+
+/** Màu thật của tầng trên (dùng cho hình 2D của ZBLL, nơi góc có thể bị xoắn). */
+export function llPatternFromState(s: CubeState): LLColorPattern {
+  return {
+    top: s.U.map(row => [...row]),
+    sides: pllPatternFromState(s).sideColors,
+  };
+}
+
+/** Cả 4 cạnh tầng trên đã định hướng (sticker vàng nằm trên mặt U). */
+export function llEdgesOriented(s: CubeState): boolean {
+  return s.U[0][1] === 0 && s.U[1][0] === 0 && s.U[1][2] === 0 && s.U[2][1] === 0;
+}
+
+/**
+ * Hai tầng dưới còn nguyên TRỪ khe FR (góc DFR + cạnh FR): thế bắt đầu hợp lệ của ZBLS.
+ * Kiểm sticker theo màu tâm, bỏ qua 4 sticker thuộc cặp FR (F[1][2], R[1][0], F[2][2], R[2][0]) và D[0][2].
+ */
+export function isF2LExceptFRSolved(s: CubeState): boolean {
+  const skip = new Set(['F12', 'F22', 'R10', 'R20', 'D02']);
+  for (const f of ['D', 'F', 'B', 'L', 'R'] as const) {
+    const rows = f === 'D' ? [0, 1, 2] : [1, 2];
+    for (const r of rows) for (let c = 0; c < 3; c++) {
+      if (skip.has(`${f}${r}${c}`)) continue;
+      if (s[f][r][c] !== s[f][1][1]) return false;
+    }
+  }
+  return true;
 }

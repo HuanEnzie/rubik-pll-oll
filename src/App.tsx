@@ -1,5 +1,5 @@
 /**
- * CubeQuick - Ứng dụng tra cứu và luyện tập công thức OLL & PLL 3x3 siêu tốc
+ * CubeQuick - Ứng dụng tra cứu và luyện tập công thức OLL, PLL, ZBLS & ZBLL 3x3 siêu tốc
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,11 +8,12 @@ import { HomeView } from './views/HomeView';
 import { OLLView } from './views/OLLView';
 import { PLLView } from './views/PLLView';
 import { PracticeView } from './views/PracticeView';
+import { ZBView, ZBKind } from './views/ZBView';
 import { AlgorithmDetailModal } from './components/AlgorithmDetailModal';
 import { SearchModal } from './components/SearchModal';
 import { NotationModal } from './components/NotationLegend';
 import { AlgorithmCase } from './types';
-import { OLL_CASES, PLL_CASES, ALL_CASES, getCaseById } from './data';
+import { OLL_CASES, PLL_CASES, ZBLL_CASES, ZBLS_CASES, CASES_BY_TYPE, getCaseById } from './data';
 import {
   getFavorites,
   toggleFavorite as toggleFavoriteStorage,
@@ -31,6 +32,7 @@ export default function App() {
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [weakCases, setWeakCases] = useState<WeakCaseItem[]>([]);
   const [practiceInitialMode, setPracticeInitialMode] = useState<'weak' | 'all'>('all');
+  const [zbKind, setZbKind] = useState<ZBKind>('ZBLS');
 
   // Load stored state on mount
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function App() {
   const handleNavigateCase = useCallback(
     (direction: 'prev' | 'next') => {
       if (!selectedCase) return;
-      const list = selectedCase.type === 'OLL' ? OLL_CASES : PLL_CASES;
+      const list = CASES_BY_TYPE[selectedCase.type];
       const currentIndex = list.findIndex(c => c.id === selectedCase.id);
       if (currentIndex === -1) return;
 
@@ -125,6 +127,10 @@ export default function App() {
           <HomeView
             onSelectOLL={() => setCurrentTab('oll')}
             onSelectPLL={() => setCurrentTab('pll')}
+            onSelectZB={kind => {
+              setZbKind(kind);
+              setCurrentTab('zb');
+            }}
             onSelectPractice={mode => {
               setPracticeInitialMode(mode || 'all');
               setCurrentTab('practice');
@@ -157,10 +163,24 @@ export default function App() {
           />
         )}
 
+        {currentTab === 'zb' && (
+          <ZBView
+            zblsCases={ZBLS_CASES}
+            zbllCases={ZBLL_CASES}
+            kind={zbKind}
+            onKindChange={setZbKind}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            onSelectCase={handleSelectCase}
+          />
+        )}
+
         {currentTab === 'practice' && (
           <PracticeView
             ollCases={OLL_CASES}
             pllCases={PLL_CASES}
+            zblsCases={ZBLS_CASES}
+            zbllCases={ZBLL_CASES}
             initialMode={practiceInitialMode}
             onOpenDetail={handleSelectCase}
           />

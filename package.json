@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "verify": "tsx scripts/verify-engine.ts && tsx scripts/verify-cases.ts"
+    "verify": "tsx scripts/verify-engine.ts && tsx scripts/verify-cases.ts && tsx scripts/verify-zb.ts",
+    "gen:zbll": "tsx scripts/gen-zbll.ts",
+    "gen:zbls": "tsx scripts/gen-zbls.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

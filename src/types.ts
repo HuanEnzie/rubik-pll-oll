@@ -1,4 +1,4 @@
-export type CaseType = 'OLL' | 'PLL';
+export type CaseType = 'OLL' | 'PLL' | 'ZBLL' | 'ZBLS';
 
 export type OLLCategory = 'Dot' | 'Line' | 'L' | 'Cross' | 'Corners';
 export type PLLCategory = 'Corners' | 'Edges' | 'G Perms' | 'Other' | 'Parity';
@@ -43,10 +43,24 @@ export interface PLLPattern {
   };
 }
 
+/**
+ * Màu thật của tầng trên (ZBLL): top 3x3 màu mặt U nhìn từ trên (F ở dưới),
+ * sides theo cùng thứ tự với PLLPattern.sideColors.
+ */
+export interface LLColorPattern {
+  top: number[][];
+  sides: {
+    N: [number, number, number];
+    E: [number, number, number];
+    S: [number, number, number];
+    W: [number, number, number];
+  };
+}
+
 export interface AlgorithmCase {
   id: string; // e.g. "oll-1", "pll-t"
   type: CaseType;
-  number: number; // 1-57 for OLL, 1-21 for PLL
+  number: number; // 1-57 for OLL, 1-21 for PLL, số thứ tự trong nhóm cho ZBLL / ZBLS
   name: string; // e.g. "OLL 21" or "T Perm"
   aka?: string[]; // e.g. ["H", "Double Sune"]
   simulatable?: boolean; // false: không mô phỏng được trên 3x3 (Parity 4x4)
@@ -54,6 +68,7 @@ export interface AlgorithmCase {
   groupNameVi: string; // Vietnamese category name e.g. "Chữ thập (Cross)", "Dấu chấm (Dot)"
   ollPattern?: OLLPattern;
   pllPattern?: PLLPattern;
+  llPattern?: LLColorPattern; // ZBLL
   algorithms: AlgorithmVariant[];
   tags: string[];
   setupMove?: string; // Move to scramble cube to this case state from solved
